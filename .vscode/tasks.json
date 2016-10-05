@@ -1,0 +1,25 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "0.1.0",
+    "windows": {
+        "command": "explorer"
+    },
+    "osx": {
+        "command": "open"
+    },
+    "linux": {
+        "command": "xdg-open"
+    },
+    "suppressTaskName": true,
+    "tasks": [
+        {
+            "taskName": "View in default browser",
+            "args": [
+                "${file}"
+            ],
+            "isBuildCommand": true
+        }
+    ],
+    "showOutput": "never"
+}

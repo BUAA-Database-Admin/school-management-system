@@ -1,53 +1,44 @@
-<!DOCTYPE html>
-<html lang="zh-cn">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login</title>
+<?php
 
-    <!-- Bootstrap -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
-
-    <link href="assets/css/login.css" rel="stylesheet" type="text/css">
-    <script src="assets/js/login.js"></script>
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="http://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <!--
-    you can substitue the span of reauth email for a input with the email and
-    include the remember me checkbox
-    -->
-    <div class="container">
-        <div class="card card-container">
-            <img id="profile-img" class="profile-img-card" src="assets/image/avatar_2x.png" />
-            <p id="profile-name" class="profile-name-card"></p>
-            <form class="form-signin">
-                <span id="reauth-email" class="reauth-email"></span>
-                <input type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
-                <input type="password" id="inputPassword" class="form-control" placeholder="Password" required>
-                <div id="remember" class="checkbox">
-                    <label>
-                        <input type="checkbox" value="remember-me"> Remember me
-                    </label>
-                </div>
-                <button class="btn btn-lg btn-primary btn-block btn-signin" type="submit">Sign in</button>
-            </form><!-- /form -->
-            <a href="#" class="forgot-password">
-                Forgot the password?
-            </a>
-        </div><!-- /card-container -->
-    </div><!-- /container -->
-
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="assets/js/bootstrap.min.js"></script>
-  </body>
-</html>
+require_once 'config.php';
+session_start();
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $stu_number = $db->real_escape_string($_POST['stu_number']);
+    $password = $_POST['password'];
+    $sql = <<<SQL
+SELECT * FROM `login`, `student`
+WHERE `login`.`sid` = {$stu_number}
+SQL;
+    $result = $db->query($sql);
+    if ($result == false || $result->num_rows == 0) {
+        # show student number error
+    }
+    $stu = $result->fetch_object();
+    if (!is_null($stu->last_failure) && (new \DateTime($stu->last_failure))->diff(new \DateTime())->days >= 1) {
+        $sql = <<<SQL
+UPDATE `login`
+SET `failure_times` = 0, `last_failure` = NULL
+WHERE `sid` = {$stu_number}
+SQL;
+        $db->query($sql);
+    }
+    if ($password != $stu->password) {
+        if ($stu->failure_times < 10) {
+            $sql = <<<SQL
+UPDATE `login`
+SET `failure_times` = `failure_times` + 1
+WHERE `sid` = {$stu_number}
+SQL;
+            $db->query($sql);
+        } else {
+            # show try-too-many-time error
+        }
+        # show password error
+    }
+    $_SESSION['stu_name'] = $stu->sname;
+    # goto index page
+} elseif (isset($_SESSION['stu_name'])) {
+    # goto index page
+} else {
+    include 'include/login.html';
+}
