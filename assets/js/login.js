@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(function() {
     // DOM ready
 
     // Test data
@@ -11,6 +11,41 @@ $(document).ready(function() {
     // testLocalStorageData();
     // Load profile if it exits
     loadProfile();
+    $("#signin").submit(function(event) {
+        $.post(
+            location.href, {
+                stu_number: $("#input-student-number").val(),
+                password: $("#input-password").val()
+            },
+            function(data) {
+                switch (data) {
+                    case "0":
+                        location.reload(true);
+                        break;
+                    case "1":
+                        $("#error-msg").insertAfter("#input-student-number")
+                            .removeClass("hidden")
+                            .text("Student number incorrect!");
+                        break;
+                    case "2":
+                        $("#error-msg").insertAfter("#input-password")
+                            .removeClass("hidden")
+                            .text("Password incorrect!");
+                        break;
+                    case "3":
+                        $("#error-msg").insertAfter("#input-password")
+                            .removeClass("hidden")
+                            .text("Tried too many times!");
+                        break;
+                    default:
+                        location.replace("/include/helloworld.html");
+                        break;
+                }
+            },
+            "text"
+        );
+        event.preventDefault();
+    });
 });
 
 /**
@@ -59,7 +94,7 @@ function loadProfile() {
  */
 function supportsHTML5Storage() {
     try {
-        return 'localStorage' in window && window['localStorage'] !== null;
+        return "localStorage" in window && window["localStorage"] !== null;
     } catch (e) {
         return false;
     }
