@@ -1,6 +1,6 @@
 <?php
 
-require_once 'config.php';
+require_once 'include/config.php';
 session_start();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stu_number = $db->real_escape_string($_POST['stu_number']);
