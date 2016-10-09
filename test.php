@@ -1,13 +1,8 @@
 <?php
 
-spl_autoload_register(function ($class) {
-    $file = "include/{$class}.class.php";
-    if (file_exists($file)) {
-        require_once $file;
-        if (is_callable("{$class}::init")) {
-            $class::{'init'}();
-        }
-    }
-});
-$user = new \User(array('id' => '14211065', 'name' => 'yjf', 'age' => '20', 'sex' => 'Male', 'dept_id' => '21'));
+require_once 'include/config.php';
+$user = \User::newInstance('id', '14211065');
 var_dump($user);
+var_dump($tmp = serialize($user));
+var_dump(unserialize($tmp));
+var_dump(md5(md5('yu820780') . md5('978515a4')));

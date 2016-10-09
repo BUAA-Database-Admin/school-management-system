@@ -10,3 +10,12 @@ if ($db->connect_error) {
     die("MySQL connect error ({$db->connect_errno}).<br>" . mb_convert_encoding($db->connect_error, 'UTF-8', 'GBK'));
     # goto database error page
 }
+spl_autoload_register(function ($class) {
+    $file = __DIR__ . "/{$class}.class.php";
+    if (file_exists($file)) {
+        require_once $file;
+        if (is_callable("{$class}::init")) {
+            $class::{'init'}();
+        }
+    }
+});

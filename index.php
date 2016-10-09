@@ -3,48 +3,34 @@
 require_once 'include/config.php';
 session_start();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $stu_number = $db->real_escape_string($_POST['stu_number']);
-    $password = $_POST['password'];
-    $sql = <<<SQL
-SELECT `failure_times`, `last_failure` FROM `login`
-WHERE `sid` = {$stu_number}
-SQL;
-    $result = $db->query($sql);
-    if ($result == false || $result->num_rows == 0) {
-        die("1");
+    if (empty($_POST['user_id'])) {
+        die('-1');
     }
-    $stu = $result->fetch_object();
-    if ($stu->failure_times >= 10) {
-        die("3");
+    $login = \Login::newInstance('user_id', $db->real_escape_string($_POST['user_id']));
+    if (empty($login)) {
+        die('1');
     }
-    if (!is_null($stu->last_failure) && (new \DateTime($stu->last_failure))->diff(new \DateTime())->days >= 1) {
-        $stu->failure_times = 0;
-        $sql = <<<SQL
-UPDATE `login`
-SET `failure_times` = 0, `last_failure` = NULL
-WHERE `sid` = {$stu_number}
-SQL;
-        $db->query($sql);
+    if ($login->fails > 0 && (new \DateTime($login->last_fail))->diff(new \DateTime())->days >= 1) {
+        $login->fails = 0;
+        $login->last_fail = null;
+        $login->update('fails', 'last_fail');
     }
-    $sql = <<<SQL
-SELECT `sname` FROM `login`, `student`
-WHERE `login`.`sid` = {$stu_number} AND `password` = '{$password}'
-SQL;
-    $result = $db->query($sql);
-    if ($result == false || $result->num_rows == 0) {
-        $sql = <<<SQL
-UPDATE `login`
-SET `failure_times` = `failure_times` + 1
-WHERE `sid` = {$stu_number}
-SQL;
-        $db->query($sql);
-        die("2");
+    if ($login->fails == 10) {
+        die('3');
     }
-    $stu = $result->fetch_object();
-    $_SESSION['stu_name'] = $stu->sname;
-    die("0");
-} elseif (isset($_SESSION['stu_name'])) {
+    if (empty($_POST['password'])) {
+        die("{$login->salt}");
+    }
+    if (hash_hmac('md5', $login->password, $_COOKIE['key']) != $_POST['password']) {
+        $login->fails++;
+        $login->update('fails');
+        die('2');
+    }
+    $_SESSION['user_id'] = $login->user_id;
+    die('0');
+} elseif (isset($_SESSION['user_id'])) {
     include 'include/helloworld.html';
 } else {
+    setcookie('key', bin2hex(random_bytes(8)));
     include 'include/login.html';
 }

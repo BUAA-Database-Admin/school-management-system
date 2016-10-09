@@ -11,41 +11,7 @@ $(function() {
     // testLocalStorageData();
     // Load profile if it exits
     loadProfile();
-    $("#signin").submit(function(event) {
-        $.post(
-            location.href, {
-                stu_number: $("#input-student-number").val(),
-                password: $("#input-password").val()
-            },
-            function(data) {
-                switch (data) {
-                    case "0":
-                        location.reload(true);
-                        break;
-                    case "1":
-                        $("#error-msg").insertAfter("#input-student-number")
-                            .removeClass("hidden")
-                            .text("Student number incorrect!");
-                        break;
-                    case "2":
-                        $("#error-msg").insertAfter("#input-password")
-                            .removeClass("hidden")
-                            .text("Password incorrect!");
-                        break;
-                    case "3":
-                        $("#error-msg").insertAfter("#input-password")
-                            .removeClass("hidden")
-                            .text("Tried too many times!");
-                        break;
-                    default:
-                        location.replace("/include/helloworld.html");
-                        break;
-                }
-            },
-            "text"
-        );
-        event.preventDefault();
-    });
+    $('#signin').submit(onSubmit);
 });
 
 /**
@@ -57,14 +23,14 @@ $(function() {
  *
  */
 function getLocalProfile(callback) {
-    var profileImgSrc = localStorage.getItem("PROFILE_IMG_SRC");
-    var profileName = localStorage.getItem("PROFILE_NAME");
-    var profileReAuthStuNumber = localStorage.getItem("PROFILE_REAUTH_STU_NUMBER");
+    var profileImgSrc = localStorage.getItem('PROFILE_IMG_SRC');
+    var profileName = localStorage.getItem('PROFILE_NAME');
+    var profileReAuthIdNumber = localStorage.getItem('PROFILE_REAUTH_ID_NUMBER');
 
     if (profileName !== null &&
-        profileReAuthStuNumber !== null &&
+        profileReAuthIdNumber !== null &&
         profileImgSrc !== null) {
-        callback(profileImgSrc, profileName, profileReAuthStuNumber);
+        callback(profileImgSrc, profileName, profileReAuthIdNumber);
     }
 }
 
@@ -76,13 +42,13 @@ function loadProfile() {
     if (!supportsHTML5Storage()) { return false; }
     // we have to provide to the callback the basic
     // information to set the profile
-    getLocalProfile(function(profileImgSrc, profileName, profileReAuthStuNumber) {
+    getLocalProfile(function(profileImgSrc, profileName, profileReAuthIdNumber) {
         //changes in the UI
-        $("#profile-img").attr("src", profileImgSrc);
-        $("#profile-name").html(profileName);
-        $("#reauth-student-number").html(profileReAuthStuNumber);
-        $("#input-student-number").hide();
-        $("#remember").hide();
+        $('#profile-img').attr('src', profileImgSrc);
+        $('#profile-name').html(profileName);
+        $('#reauth-user-id').html(profileReAuthIdNumber);
+        $('#input-user-id').hide();
+        $('#remember').hide();
     });
 }
 
@@ -94,8 +60,61 @@ function loadProfile() {
  */
 function supportsHTML5Storage() {
     try {
-        return "localStorage" in window && window["localStorage"] !== null;
+        return 'localStorage' in window && window['localStorage'] !== null;
     } catch (e) {
         return false;
+    }
+}
+
+function onSubmit(event) {
+    var userId = $('#input-user-id').val();
+    $.post(
+        location.href, {
+            user_id: userId
+        },
+        function(data) {
+            onRespond(data);
+            var password = md5(md5(md5($('#input-password').val()) + md5(Cookies.get('salt'))), Cookies.get('key'));
+            Cookies.remove('salt');
+            $.post(
+                location.href, {
+                    user_id: userId,
+                    password: password
+                },
+                onRespond,
+                'text'
+            );
+        },
+        'text'
+    );
+    event.preventDefault();
+}
+
+function onRespond(data) {
+    switch (data) {
+        case '0':
+            location.reload(true);
+            break;
+        case '1':
+            $('#error-msg').insertAfter('#input-user-id')
+                .removeClass('hidden')
+                .text('ID number incorrect!');
+            break;
+        case '2':
+            $('#error-msg').insertAfter('#input-password')
+                .removeClass('hidden')
+                .text('Password incorrect!');
+            break;
+        case '3':
+            $('#error-msg').insertAfter('#input-password')
+                .removeClass('hidden')
+                .text('Tried too many times!');
+            break;
+        case '-1':
+            location.replace('/include/helloworld.html');
+            break;
+        default:
+            Cookies.set('salt', data);
+            break;
     }
 }

@@ -7,22 +7,40 @@
  *
  * @author EternalPhane
  */
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 abstract class BaseClass
 {
     protected static $typeHint;
-    protected static $table;
-    public static abstract function init();
-    public function __construct(array $arr_both)
+    protected static abstract function initTypeHint();
+    public static final function init()
     {
-        foreach ($arr_both as $key => $value) {
-            $this->{$key} = $value;
+        if (get_called_class() == __CLASS__ || isset(static::$typeHint)) {
+            return;
         }
-        foreach (get_object_vars($this) as $key => $value) {
-            if (isset(self::$typeHint[$key])) {
-                settype($this->{$key}, self::$typeHint[$key]);
+        static::initTypeHint();
+        foreach (static::$typeHint as &$value) {
+            $value = explode(' ', $value);
+        }
+    }
+    public static final function newInstance(string $key, string $value)
+    {
+        $class = get_called_class();
+        if (property_exists($class, $key)) {
+            $table = strtolower($class);
+            $sql = "SELECT * FROM `{$table}` WHERE `{$key}` = ";
+            if (static::$typeHint[$key][0] == 'int') {
+                $sql .= $value;
+            } else {
+                $sql .= "'{$value}'";
             }
+            global $db;
+            $result = $db->query($sql);
+            if ($result == false || $result->num_rows == 0) {
+                return null;
+            }
+            return new $class($result->fetch_array());
         }
+        return null;
     }
     public final function __get(string $name)
     {
@@ -33,33 +51,49 @@ abstract class BaseClass
     public final function __set(string $name, $value)
     {
         if (property_exists(get_class($this), $name)) {
+            if (is_null($value) && static::$typeHint[$name][1] == 'nn') {
+                throw new \Exception("{$name} can't be null!", 1);
+            }
             $this->{$name} = $value;
+            if (isset($value)) {
+                settype($this->{$name}, static::$typeHint[$name][0]);
+            }
         }
     }
-    protected final function update() : bool
+    protected function __construct(array $arr)
     {
+        foreach (static::$typeHint as $key => $value) {
+            $this->__set($key, $arr[$key]);
+        }
+    }
+    public final function update(string ...$fields) : bool
+    {
+        if (sizeof($fields)) {
+            return $this->updateFields($fields);
+        }
+        return $this->updateFields(array_keys(static::$typeHint));
+    }
+    private final function updateFields($arr) : bool
+    {
+        $table = strtolower(get_called_class());
         $sql = "UPDATE `{$table}` SET ";
-        $vars = get_object_vars($this);
-        next($vars);
-        next($vars);
-        $primary = key($vars);
-        foreach ($vars as $key => $value) {
-            if (empty(self::$typeHint[$key])) {
+        foreach ($arr as $value) {
+            if (is_null(static::$typeHint[$value])) {
                 continue;
             }
-            $clause = "`{$key}` = ";
-            if (empty($value)) {
+            $clause = "`{$value}` = ";
+            if (is_null($this->{$value})) {
                 $clause .= 'NULL, ';
+            } elseif (static::$typeHint[$value][0] == 'int') {
+                $clause .= "{$this->{$value}}, ";
             } else {
-                if (self::$typeHint[$key] == 'int') {
-                    $clause .= "{$value}, ";
-                } else {
-                    $clause .= "'{$value}', ";
-                }
+                $clause .= "'{$this->{$value}}', ";
             }
             $sql .= $clause;
         }
-        $sql .= "WHERE `{$primary}` = {$vars[$primary]}";
+        reset(static::$typeHint);
+        $primary = key(static::$typeHint);
+        $sql .= "WHERE `{$primary}` = {$this->{$primary}}";
         global $db;
         return $db->query($sql);
     }

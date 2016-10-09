@@ -5,25 +5,19 @@
  *
  * @author EternalPhane
  */
-require_once 'BaseClass.class.php';
+require_once __DIR__ . '/config.php';
 class Contact extends \BaseClass
 {
+    protected static $typeHint;
     protected $user_id;
     protected $email;
     protected $telephone;
     protected $mobile;
-    public static function init()
+    protected static function initTypeHint()
     {
-        self::$typeHint['user_id'] = 'int';
-        self::$typeHint['email'] = 'string';
-        self::$typeHint['teltphone'] = 'string';
-        self::$typeHint['mobile'] = 'string';
-    }
-    public function __construct(array $arr_both)
-    {
-        parent::__construct($arr_both);
-        if (empty($arr_both['user_id'])) {
-            throw new \Exception("user_id can't be null!");
-        }
+        static::$typeHint['user_id'] = 'int nn';
+        static::$typeHint['email'] = 'string';
+        static::$typeHint['teltphone'] = 'string';
+        static::$typeHint['mobile'] = 'string';
     }
 }

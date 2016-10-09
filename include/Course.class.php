@@ -5,25 +5,17 @@
  *
  * @author EternalPhane
  */
-require_once 'BaseClass.class.php';
+require_once __DIR__ . '/config.php';
 class Course extends \BaseClass
 {
+    protected static $typeHint;
     protected $id;
     protected $name;
     protected $credit;
-    public static function init()
+    protected static function initTypeHint()
     {
-        self::$typeHint['id'] = 'int';
-        self::$typeHint['name'] = 'string';
-        self::$typeHint['credit'] = 'int';
-    }
-    public function __construct($arr_both)
-    {
-        parent::__construct($arr_both);
-        foreach (get_object_vars($this) as $key => $value) {
-            if (empty($value)) {
-                throw new \Exception("{$key} can't be null!");
-            }
-        }
+        static::$typeHint['id'] = 'int nn';
+        static::$typeHint['name'] = 'string nn';
+        static::$typeHint['credit'] = 'int nn';
     }
 }
