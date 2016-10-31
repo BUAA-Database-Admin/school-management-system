@@ -1,18 +1,19 @@
 <?php
 /**
- * Class Course
+ * Class Department
+ *
+ * Base class for all other custom classes.
  *
  * @author EternalPhane
  */
 
 require_once __DIR__ . '/config.php';
 
-class Course extends BaseClass
+class Department extends BaseClass
 {
     protected static $typeHint;
     protected $id;
     protected $name;
-    protected $credit;
 
     use Updatable;
     use Insertable;
@@ -21,6 +22,5 @@ class Course extends BaseClass
     {
         static::$typeHint['id'] = 'int nn';
         static::$typeHint['name'] = 'string nn';
-        static::$typeHint['credit'] = 'int nn';
     }
 }

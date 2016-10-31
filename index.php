@@ -1,16 +1,15 @@
 <?php
-
 require_once 'include/config.php';
 session_start();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (empty($_POST['user_id'])) {
         die('-1');
     }
-    $login = \Login::newInstance('user_id', $db->real_escape_string($_POST['user_id']));
+    $login = Login::newInstance('user_id', $db->real_escape_string($_POST['user_id']));
     if (empty($login)) {
         die('1');
     }
-    if ($login->fails > 0 && (new \DateTime($login->last_fail))->diff(new \DateTime())->days >= 1) {
+    if ($login->fails > 0 && (new DateTime($login->last_fail))->diff(new DateTime())->days >= 1) {
         $login->fails = 0;
         $login->last_fail = null;
         $login->update('fails', 'last_fail');
@@ -27,6 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die('2');
     }
     $_SESSION['user_id'] = $login->user_id;
+    $login->fails = 0;
+    $login->last_fail = null;
+    $login->update('fails', 'last_fail');
     die('0');
 } elseif (isset($_SESSION['user_id'])) {
     include 'include/helloworld.html';

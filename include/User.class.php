@@ -1,12 +1,13 @@
 <?php
-
 /**
  * Class User
  *
  * @author EternalPhane
  */
+
 require_once __DIR__ . '/config.php';
-class User extends \BaseClass
+
+class User extends BaseClass
 {
     protected static $typeHint;
     protected $id;
@@ -14,22 +15,10 @@ class User extends \BaseClass
     protected $age;
     protected $sex;
     protected $dept_id;
-    protected $contact;
-    public function modifyPersonalInfo(array $arr)
-    {
-        foreach ($arr as $key => $value) {
-            if (property_exists('User', $key)) {
-                $this->{$key} = $value;
-            } else {
-                $this->contact->{$key} = $value;
-            }
-        }
-        $this->update();
-    }
-    public function viewCourceInfo(string $cource)
-    {
-        # code...
-    }
+
+    use Updatable;
+    use Insertable;
+
     protected static function initTypeHint()
     {
         static::$typeHint['id'] = 'int nn';
@@ -38,9 +27,29 @@ class User extends \BaseClass
         static::$typeHint['sex'] = 'string nn';
         static::$typeHint['dept_id'] = 'int nn';
     }
-    protected function __construct(array $arr)
+
+    public function joinContact()
     {
-        parent::__construct($arr);
-        $this->contact = \Contact::newInstance('user_id', $this->id);
+        $this->contact = Contact::newInstance('user_id', $this->id);
+    }
+
+    public function modifyPersonalInfo(array $arr) : bool
+    {
+        foreach ($arr as $key => $value) {
+            if (property_exists('User', $key)) {
+                $this->{$key} = $value;
+            } else {
+                if (!isset($this->contact)) {
+                    joinContact();
+                }
+                $this->contact->{$key} = $value;
+            }
+        }
+        return $this->update() && $this->contact->update();
+    }
+
+    public function viewCourceInfo(int $course_id) : Course
+    {
+        return Course::newInstance('id', $course_id);
     }
 }
