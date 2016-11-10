@@ -13,6 +13,7 @@ class Course extends BaseClass
     protected $id;
     protected $name;
     protected $credit;
+    protected $user_id;
 
     use Updatable;
     use Insertable;
@@ -22,5 +23,6 @@ class Course extends BaseClass
         static::$typeHint['id'] = 'int nn';
         static::$typeHint['name'] = 'string nn';
         static::$typeHint['credit'] = 'int nn';
+        static::$typeHint['user_id'] = 'int nn';
     }
 }

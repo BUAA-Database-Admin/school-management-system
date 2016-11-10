@@ -24,7 +24,7 @@ class Login extends BaseClass
         static::$typeHint['user_id'] = 'int nn';
         static::$typeHint['password'] = 'string nn';
         static::$typeHint['salt'] = 'string nn';
-        static::$typeHint['fails'] = 'int nn';
+        static::$typeHint['fails'] = 'int';
         static::$typeHint['last_fail'] = 'string';
     }
 }

@@ -15,9 +15,8 @@ trait Insertable
         $sql = "INSERT INTO `${table}` (`";
         $sql .= implode('`, `', array_keys($col));
         $sql .= '`) VALUES (';
-        $tmp = array();
         foreach ($col as $key => $value) {
-            if (is_null($value)) {
+            if (empty($value)) {
                 $tmp[] = 'NULL';
             } elseif (self::$typeHint[$key][0] == 'int') {
                 $tmp[] = $value;

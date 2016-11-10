@@ -15,6 +15,9 @@ class User extends BaseClass
     protected $age;
     protected $sex;
     protected $dept_id;
+    protected $role;
+    protected $contact;
+    protected $login;
 
     use Updatable;
     use Insertable;
@@ -30,26 +33,45 @@ class User extends BaseClass
 
     public function joinContact()
     {
-        $this->contact = Contact::newInstance('user_id', $this->id);
+        $this->contact = Contact::newInstance(array('user_id' => $this->id));
+    }
+
+    public function joinLogin()
+    {
+        $this->login = Login::newInstance(array('user_id' => $this->id));
     }
 
     public function modifyPersonalInfo(array $arr) : bool
     {
+        if (empty($this->contact)) {
+            $this->joinContact();
+        }
+        if (empty($this->login)) {
+            $this->joinLogin();
+        }
         foreach ($arr as $key => $value) {
             if (property_exists('User', $key)) {
                 $this->{$key} = $value;
-            } else {
-                if (!isset($this->contact)) {
-                    joinContact();
-                }
+            } elseif (property_exists('Contact', $key)) {
                 $this->contact->{$key} = $value;
+            } elseif ($key == 'password') {
+                $this->login->password = md5($value . md5($this->login->salt));
             }
         }
-        return $this->update() && $this->contact->update();
+        return $this->update() && $this->contact->update() && $this->login->update();
     }
 
-    public function viewCourceInfo(int $course_id) : Course
+    public function viewCourseInfo(int $course_id) : array
     {
-        return Course::newInstance('id', $course_id);
+        $course = Course::newInstance(array('id' => $course_id));
+        if (empty($course)) {
+            return array();
+        }
+        $result['id'] = $course->id;
+        $result['name'] = $course->name;
+        $teacher = User::newInstance(array('id' => $course->user_id));
+        $result['teacher'] = $teacher->name;
+        $result['credit'] = $course->credit;
+        return $result;
     }
 }

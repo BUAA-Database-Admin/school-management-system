@@ -1,0 +1,11 @@
+body {
+    padding-top: 70px;
+}
+
+.title {
+    text-align: center;
+}
+
+.table > tbody td, .table > tbody th {
+    vertical-align: middle!important;
+}

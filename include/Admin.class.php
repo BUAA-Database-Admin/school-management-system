@@ -11,6 +11,7 @@ class Admin extends BaseClass
 {
     protected static $typeHint;
     protected $user_id;
+    protected $role;
 
     use Updatable;
 

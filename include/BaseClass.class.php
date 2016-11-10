@@ -28,29 +28,39 @@ abstract class BaseClass
 
     final public static function newInstance(array $arr)
     {
+        return self::newInstances($arr)[0];
+    }
+
+    final public static function newInstances($arr)
+    {
         $class = get_called_class();
-        $table = strtolower($class);
-        $sql = "SELECT * FROM `{$table}` WHERE ";
-        $clauses = array();
-        foreach ($arr as $key => $value) {
-            if (!property_exists($class, $key)) {
-                return null;
+        $table = strtolower(preg_replace(['/([a-z])([A-Z])/', '/([^_])([A-Z][a-z])/'], '$1_$2', $class));
+        $sql = "SELECT * FROM `{$table}`";
+        if (isset($arr)) {
+            $sql .= ' WHERE ';
+            foreach ($arr as $key => $value) {
+                if (!property_exists($class, $key)) {
+                    return null;
+                }
+                $clause = "`{$key}` = ";
+                if (static::$typeHint[$key][0] == 'int') {
+                    $clause .= $value;
+                } else {
+                    $clause .= "'{$value}'";
+                }
+                    $clauses[] = $clause;
             }
-            $clause = "`{$key}` = ";
-            if (static::$typeHint[$key][0] == 'int') {
-                $clause .= $value;
-            } else {
-                $clause .= "'{$value}'";
-            }
-            $clauses[] = $clause;
+            $sql .= implode(' AND ', $clauses);
         }
-        $sql .= implode(' AND ', $clauses);
         global $db;
-        $result = $db->query($sql);
-        if ($result == false || $result->num_rows == 0) {
+        $results = $db->query($sql);
+        if ($results == false || $results->num_rows == 0) {
             return null;
         }
-        return new $class($result->fetch_array());
+        while ($result = $results->fetch_array()) {
+            $instances[] = new $class($result);
+        }
+        return $instances;
     }
 
     final public function __get(string $name)
@@ -63,7 +73,7 @@ abstract class BaseClass
     final public function __set(string $name, $value)
     {
         if (isset(static::$typeHint[$name])) {
-            if (is_null($value) && static::$typeHint[$name][1] == 'nn') {
+            if (empty($value) && static::$typeHint[$name][1] == 'nn') {
                 throw new Exception("{$name} can't be null!", 1);
             }
             $this->{$name} = $value;
@@ -75,8 +85,13 @@ abstract class BaseClass
 
     protected function __construct(array $arr)
     {
-        foreach (static::$typeHint as $key => $value) {
-            $this->__set($key, $arr[$key]);
+        foreach ($arr as $key => $value) {
+            if (property_exists(get_class($this), $key)) {
+                $this->{$key} = $value;
+                if (isset(static::$typeHint[$key])) {
+                    settype($this->{$key}, static::$typeHint[$key][0]);
+                }
+            }
         }
     }
 }

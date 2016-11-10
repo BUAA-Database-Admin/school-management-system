@@ -1,10 +1,10 @@
 <?php
 require_once 'include/config.php';
 $user = User::newInstance(array('id' => '14211065'));
+$user->joinContact();
 var_dump($user);
 var_dump($tmp = serialize($user));
 var_dump(unserialize($tmp));
-var_dump(md5(md5('yu820780') . md5('978515a4')));
-$a = array('a' => 'a', 'b' => 'b');
-unset($a['b']);
-var_dump($a);
+$salt = bin2hex(random_bytes(4));
+var_dump($salt);
+var_dump(md5(md5('root') . md5($salt)));

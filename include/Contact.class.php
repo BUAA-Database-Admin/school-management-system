@@ -16,12 +16,13 @@ class Contact extends BaseClass
     protected $mobile;
 
     use Updatable;
+    use Insertable;
 
     protected static function initTypeHint()
     {
         static::$typeHint['user_id'] = 'int nn';
         static::$typeHint['email'] = 'string';
-        static::$typeHint['teltphone'] = 'string';
+        static::$typeHint['telephone'] = 'string';
         static::$typeHint['mobile'] = 'string';
     }
 }

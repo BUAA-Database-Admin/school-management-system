@@ -21,13 +21,12 @@ trait Updatable
     {
         $table = strtolower(preg_replace(['/([a-z])([A-Z])/', '/([^_])([A-Z][a-z])/'], '$1_$2', __CLASS__));
         $sql = "UPDATE `{$table}` SET ";
-        $clauses = array();
         foreach ($arr as $value) {
-            if (is_null(static::$typeHint[$value])) {
+            if (empty(static::$typeHint[$value])) {
                 continue;
             }
             $clause = "`{$value}` = ";
-            if (is_null($this->{$value})) {
+            if (empty($this->{$value})) {
                 $clause .= 'NULL';
             } elseif (static::$typeHint[$value][0] == 'int') {
                 $clause .= $this->{$value};
